@@ -1,14 +1,24 @@
 from level import Level
 import pygame
 import sys
+import os
+import tkinter as tk
+from tkinter import messagebox
 
 class Game:
     def __init__(self):
         pygame.init()
         self.level = 2
         self.update_window_size()
-        self.current_level = Level(self.level, self.level, self.screen.get_width(), self.screen.get_height())
-        self.current_level.generate_numbers()
+        self.current_level = Level(self.level, self.screen.get_width(), self.screen.get_height())
+        if os.path.exists('saved_level.json'):
+            self.current_level.load_level('saved_level.json')
+            self.level = self.current_level.level_number
+            self.update_window_size()
+            self.current_level.__init__(self.level, self.screen.get_width(), self.screen.get_height())
+            self.current_level.load_level('saved_level.json')
+        else:
+            self.current_level.generate_numbers()
         self.clock = pygame.time.Clock()  # Initialize the clock
 
     def update_window_size(self):
@@ -29,6 +39,7 @@ class Game:
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                self.prompt_save_level()
                 pygame.quit()
                 sys.exit()
             elif event.type == pygame.MOUSEBUTTONDOWN:
@@ -41,7 +52,7 @@ class Game:
 
     def update(self):
         if self.current_level.find_maixnum() == self.level ** 2:
-            if self.current_level.is_complete():
+            if self.current_level.Completed:
                 # Display "Level Upgrade" comment
                 font_size = min(self.screen.get_width() // 10, self.screen.get_height() // 10)
                 font = pygame.font.Font(None, font_size)
@@ -53,7 +64,7 @@ class Game:
 
                 self.level += 1
                 self.update_window_size()
-                self.current_level = Level(self.level, self.level, self.screen.get_width(), self.screen.get_height())
+                self.current_level = Level(self.level, self.screen.get_width(), self.screen.get_height())
                 self.current_level.generate_numbers()
             else:
                 self.current_level.reset_level()
@@ -62,6 +73,15 @@ class Game:
         self.screen.fill((255, 255, 255))
         self.current_level.draw(self.screen)
         pygame.display.flip()
+
+    def prompt_save_level(self):
+        # Use a GUI prompt to ask the user to save the current level
+        root = tk.Tk()
+        root.withdraw()  # Hide the root window
+        save = messagebox.askyesno("Save Level", "Do you want to save the current level?")
+        if save:
+            self.current_level.save_level('saved_level.json')
+        root.destroy()
 
 if __name__ == "__main__":
     game = Game()
