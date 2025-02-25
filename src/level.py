@@ -199,7 +199,7 @@ class Level:
         level_data = {
             'level_number': self.level_number,
             'clicked_numbers': self.clicked_numbers,
-            'buttons': [{'position': button['grid'].get_position(), 'number': button['grid'].get_number(), 'clicked': button['grid'].is_clicked(),"IsUserInput":button['grid'].IsUserInput} for button in self.buttons]
+            'buttons': [{'position': button['grid'].get_position(), 'number': button['grid'].get_number(), 'clicked': button['grid'].is_clicked(),"IsUserInput":button['grid'].IsUserInput,"OrignalNumber":button['grid'].OrignalNumber} for button in self.buttons]
         }
         json_data = json.dumps(level_data)
         base64_data = base64.b64encode(json_data.encode('utf-8')).decode('utf-8')
@@ -223,6 +223,10 @@ class Level:
                     if button_data['IsUserInput']==True and refresh:
                         button['grid'].clicked = False
                         button['grid'].IsUserInput=False
+                        button['grid'].number=button_data['OrignalNumber']
+                        button['grid'].OrignalNumber=button_data['OrignalNumber']
                 except:
                     pass
+        min_number = min(button['grid'].get_number() for button in self.buttons if button['grid'].is_clicked()==False)
+        self.clicked_numbers = list(range(1, min_number))
         self.IsGenerated=True

@@ -31,8 +31,8 @@ python src/game.py
 
 ## How To Play
 
-Press F1 is save level
-press F5 is refresh current level
+Press F1 is save level,
+press F5 is refresh current level but not re-generate
 
 
 ## Game Mechanics
