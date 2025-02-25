@@ -1,0 +1,10 @@
+[tool.briefcase]
+project_name = "NumberGame"
+bundle = "com.example"
+version = "0.0.1"
+
+[tool.briefcase.app.numbergame]
+formal_name = "Number Game"
+description = "A simple number connection game"
+sources = ["src/numbergame"]
+license = "MIT"

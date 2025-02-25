@@ -2,7 +2,11 @@ import numpy as np
 import pygame
 import random
 import json
+import base64  # Import base64 module
+import tkinter as tk
 from grid import Grid
+from threading import Thread
+from tkinter import messagebox
 
 class Level:
     def __init__(self, level_number, screen_width, screen_height):
@@ -13,6 +17,8 @@ class Level:
         self.buttons = self.create_buttons()
         self.clicked_numbers = []
         self.Completed=False
+        self.screen=None
+        self.IsGenerated=False
 
     def calculate_grid_size(self, level_number):
         #return int(level_number ** 0.5) + (level_number % 2)
@@ -32,10 +38,17 @@ class Level:
                 buttons.append({'rect': rect, 'grid': Grid((row, col))})
         return buttons
 
-    def generate_numbers(self):
+    def generate_numbers(self,screen=None):
+        if(screen!=None):
+            self.screen=screen
+        t= Thread(target=self.generate_numbersAsync)
+        t.start()
+        #t.join()
+        
+    def generate_numbersAsync(self):
+        self.IsGenerated=False
         max_number = self.level_number ** 2
         numbers = list(range(1, max_number + 1))
-        
         # Ensure numbers are placed in a sequence that guarantees they are adjacent to each other
         directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
         done = False
@@ -74,10 +87,13 @@ class Level:
                 button['grid'].clicked = True
         min_number = min(button['grid'].get_number() for button in self.buttons if button['grid'].is_clicked()==False)
         self.clicked_numbers = list(range(1, min_number))
-
+        self.save_level("saved_level.level")
+        self.IsGenerated=True
     def click_button(self, pos):
+        if(self.IsGenerated==False):
+            return
         #min_number = min(button['grid'].get_number() for button in self.buttons if button['grid'].is_clicked()==False)
-        min_number =max(self.clicked_numbers)+1 if self.clicked_numbers else 1
+        min_number =(max(self.clicked_numbers))+1 if self.clicked_numbers else 1
         start_number = min_number
         level_square = self.level_number ** 2
         for button in self.buttons:
@@ -89,15 +105,20 @@ class Level:
                     if number not in self.clicked_numbers: self.clicked_numbers.append(number)
                     button['grid'].number= number
                     button['grid'].clicked = True
-                    for button in self.buttons:
-                        if button['grid'].is_clicked() and button['grid'].get_number() == start_number+1:
-                            self.clicked_numbers.append(button['grid'].get_number())
-                            start_number+=1
+                    button['grid'].IsUserInput = True
+                    self.CheckNext(number)
                     if self.is_complete(button,start_number) == False:
                         self.reset_level()
                 self.clicked_numbers.sort()
                 return True
         return False
+    def CheckNext(self,number):
+        for button in self.buttons:
+            if button['grid'].is_clicked() and button['grid'].get_number() == (number+1):
+                self.clicked_numbers.append(button['grid'].get_number())
+                number+=1
+                self.CheckNext(number)
+                break
 
     def find_maixnum(self):
         if not self.clicked_numbers:
@@ -128,6 +149,14 @@ class Level:
         self.screen.blit(text, text_rect)
         pygame.display.flip()
         pygame.time.wait(2000)  # Wait for 2 seconds
+        root = tk.Tk()
+        root.withdraw()  # Hide the root window
+        root.attributes("-topmost", True)  # Set the root window as topmost
+        save = messagebox.askyesno("Refresh", "Do you want challenge again?", icon='question')
+        if save:
+            self.load_level('saved_level.level')
+            return
+        root.destroy()
 
         self.clicked_numbers = list(range(1, self.level_number + 1))
         for button in self.buttons:
@@ -144,6 +173,12 @@ class Level:
                 button['grid'].set_hover(False)
 
     def draw(self, screen):
+        if self.IsGenerated==False:
+            font = pygame.font.Font(None, 36)
+            text = font.render("Generating...", True, (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))
+            text_rect = text.get_rect(center=(self.screen_width // 2, self.screen_height // 2))
+            screen.blit(text, text_rect)
+            return
         self.screen = screen  # Store the screen reference for use in reset_level
         for button in self.buttons:
             if button['grid'].is_hover():
@@ -164,14 +199,18 @@ class Level:
         level_data = {
             'level_number': self.level_number,
             'clicked_numbers': self.clicked_numbers,
-            'buttons': [{'position': button['grid'].get_position(), 'number': button['grid'].get_number(), 'clicked': button['grid'].is_clicked()} for button in self.buttons]
+            'buttons': [{'position': button['grid'].get_position(), 'number': button['grid'].get_number(), 'clicked': button['grid'].is_clicked(),"IsUserInput":button['grid'].IsUserInput} for button in self.buttons]
         }
+        json_data = json.dumps(level_data)
+        base64_data = base64.b64encode(json_data.encode('utf-8')).decode('utf-8')
         with open(filename, 'w') as f:
-            json.dump(level_data, f)
+            f.write(base64_data)
 
-    def load_level(self, filename):
+    def load_level(self, filename,refresh=False):
         with open(filename, 'r') as f:
-            level_data = json.load(f)
+            base64_data = f.read()
+        json_data = base64.b64decode(base64_data.encode('utf-8')).decode('utf-8')
+        level_data = json.loads(json_data)
         self.level_number = level_data['level_number']
         self.clicked_numbers = level_data['clicked_numbers']
         for button_data in level_data['buttons']:
@@ -180,3 +219,10 @@ class Level:
             if button:
                 button['grid'].generate_number(button_data['number'])
                 button['grid'].clicked = button_data['clicked']
+                try:
+                    if button_data['IsUserInput']==True and refresh:
+                        button['grid'].clicked = False
+                        button['grid'].IsUserInput=False
+                except:
+                    pass
+        self.IsGenerated=True

@@ -29,6 +29,12 @@ After installing the dependencies, you can start the game by executing the follo
 python src/game.py
 ```
 
+## How To Play
+
+Press F1 is save level
+press F5 is refresh current level
+
+
 ## Game Mechanics
 - Each level consists of a grid of squares, with the number of squares equal to the level number.
 - Players must click on the grids to reveal numbers sequentially.

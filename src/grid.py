@@ -5,6 +5,7 @@ class Grid:
         self.clicked = False
         self.hover = False  # Add hover state
         self.wrong = False  # Add wrong state
+        self.IsUserInput = False
 
     def generate_number(self, number):
         self.number = number
