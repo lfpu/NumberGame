@@ -7,6 +7,7 @@ import tkinter as tk
 from grid import Grid
 from threading import Thread
 from tkinter import messagebox
+import MatrixGenerator as matrix
 
 class Level:
     def __init__(self, level_number, screen_width, screen_height):
@@ -44,10 +45,8 @@ class Level:
         t= Thread(target=self.generate_numbersAsync)
         t.start()
         #t.join()
+    def old_generate_numbers(self):
         
-    def generate_numbersAsync(self):
-        self.IsGenerated=False
-        max_number = self.level_number ** 2
         numbers = list(range(1, max_number + 1))
         # Ensure numbers are placed in a sequence that guarantees they are adjacent to each other
         directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
@@ -76,6 +75,14 @@ class Level:
             else:
                 for button in self.buttons:
                     button['grid'].reset()
+    def generate_numbersAsync(self):
+        self.IsGenerated=False
+        max_number = self.level_number ** 2
+        matrixs=matrix.generate_matrix(self.level_number)
+        elements_with_coords = [(x, y, matrixs[y][x]) for y in range(len(matrixs)) for x in range(len(matrixs[y]))]
+        for x, y, value in elements_with_coords:
+            button = next(button for button in self.buttons if button['grid'].get_position() == (y,x))
+            button['grid'].generate_number(value)
 
         # Randomly select n numbers to display, where n is equal to the current level
         display_numbers = random.sample(range(1, max_number + 1), self.level_number)
