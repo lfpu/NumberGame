@@ -131,7 +131,19 @@ class Level:
         if not self.clicked_numbers:
             return None
         return max(self.clicked_numbers)
-
+    def PromptNextNumber(self):
+        if(self.IsGenerated==False):
+            return
+        next_number = 1 if not self.clicked_numbers else max(self.clicked_numbers)+1
+        if next_number > self.level_number ** 2:
+            return
+        for button in self.buttons:
+            if button['grid'].get_number() == next_number:
+                button['grid'].clicked = True
+                button['grid'].IsUserInput = True
+                self.clicked_numbers.append(next_number)
+                break
+        
     def is_complete(self,btn,start):
         # if  btn['grid'].get_number() != start:
         #     return False
@@ -194,7 +206,8 @@ class Level:
                 color = (211, 211, 211) if button['grid'].is_clicked() else (255, 255, 255)
                 color=color if button['grid'].wrong==False else (255, 0, 0)  # Change color to red if the number is placed incorrectly
             pygame.draw.rect(screen, color, button['rect'])
-            pygame.draw.rect(screen, (0, 0, 0), button['rect'], 1)
+            bordercolor=(59, 127, 78) if button['grid'].IsUserInput else (0, 0, 0)
+            pygame.draw.rect(screen, bordercolor, button['rect'], 1)
             number = button['grid'].get_number()
             if button['grid'].is_clicked() and number > 0:
                 font = pygame.font.Font(None, 36)
@@ -235,5 +248,5 @@ class Level:
                 except:
                     pass
         min_number = min(button['grid'].get_number() for button in self.buttons if button['grid'].is_clicked()==False)
-        self.clicked_numbers = list(range(1, min_number))
+        self.clicked_numbers = list(range(1,min_number))
         self.IsGenerated=True

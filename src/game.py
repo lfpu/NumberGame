@@ -8,7 +8,7 @@ from tkinter import messagebox
 class Game:
     def __init__(self):
         pygame.init()
-        self.level = 2
+        self.level = 15
         self.update_window_size()
         self.current_level = Level(self.level, self.screen.get_width(), self.screen.get_height())
         if os.path.exists('saved_level.level'):
@@ -54,6 +54,9 @@ class Game:
                     self.prompt_rechallenge_level()
                 elif event.key == pygame.K_F1:
                     self.prompt_save_level()
+                elif event.key == pygame.K_F2:
+                    self.PromptNextNumber()
+                    
 
     def update(self):
         if self.current_level.find_maixnum() == self.level ** 2:
@@ -101,7 +104,8 @@ class Game:
             self.current_level.load_level('saved_level.level',True)
             self.current_level.save_level('saved_level.level')
         root.destroy()
-
+    def PromptNextNumber(self):
+        self.current_level.PromptNextNumber()
 if __name__ == "__main__":
     game = Game()
     game.run()

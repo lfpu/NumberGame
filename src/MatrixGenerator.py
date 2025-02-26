@@ -30,6 +30,9 @@ def generate_matrix(level):
                     neighbors.append((next_row, next_col, freedom))
 
             if not neighbors:
+                print('-----------------------------------')
+                for row in matrix:
+                    print(row)
                 break  # 无路可走，重新生成
 
             # 选择自由度最小的邻居，若有多个则随机选择
